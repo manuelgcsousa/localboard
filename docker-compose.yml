@@ -1,0 +1,11 @@
+services:
+  localboard:
+    container_name: localboard
+    image: golang:1.22-bookworm
+    restart: unless-stopped
+    volumes:
+      - ./:/app
+    ports:
+      - "27049:27049"
+    working_dir: /app
+    command: make run
