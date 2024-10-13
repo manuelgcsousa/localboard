@@ -19,23 +19,20 @@ const (
 )
 
 func main() {
-	http.HandleFunc("/", serveIndex)
-	http.HandleFunc("/script.js", serveScript)
+	// Handle all public files with FileServer
+	fs := http.FileServer(http.Dir("./public/"))
+	http.Handle("/", fs)
+
+	// Non-static routes
 	http.HandleFunc("/read", handleRead)
 	http.HandleFunc("/save", handleSave)
 
+	// Wrap default serve mux with logger middleware
 	handler := Logger(http.DefaultServeMux)
 
+	// Start server
 	fmt.Printf("Server listening on port %s...\n", ServerPort)
 	log.Fatal(http.ListenAndServe(ServerPort, handler))
-}
-
-func serveIndex(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "./public/index.html")
-}
-
-func serveScript(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "./public/script.js")
 }
 
 func handleRead(w http.ResponseWriter, r *http.Request) {

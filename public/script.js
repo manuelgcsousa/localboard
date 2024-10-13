@@ -57,6 +57,14 @@ window.addEventListener("keydown", (event) => {
   }
 });
 
+// Force refresh when app becomes visible (mobile apps).
+// Hard reload when app loads.
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    location.reload(true);
+  }
+});
+
 // On any keypress within the 'textarea':
 // 1) From a list of keys, update the "sync" icon button.
 // 2) If it's a tab, introduce that tab char into the textarea.
