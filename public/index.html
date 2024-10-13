@@ -17,6 +17,13 @@
     <div class="container">
       <p class="title is-3">Localboard</p>
 
+      <label class="label">
+        <span class="icon" id="status-icon">
+          <i id="icon" class="fas fa-check-circle has-text-success"></i>
+        </span>
+        <span id="button-text">Synched</span>
+      </label>
+
       <div class="field">
         <div class="control">
           <textarea class="textarea" id="textarea" rows="10" placeholder="Start typing..."></textarea>
@@ -24,15 +31,15 @@
       </div>
 
       <button class="button" onclick="saveClipboardText()">
-        <span class="icon" id="status-icon">
-          <i id="icon" class="fas fa-check-circle has-text-success"></i>
+        <span class="icon">
+          <i class="fas fa-save"></i>
         </span>
-        <span id="button-text">Synched</span>
+        <span>Save</span>
       </button>
 
       <button class="button ml-2" onclick="setClipboardText()">
         <span class="icon">
-          <i id="icon" class="fa fa-refresh"></i>
+          <i class="fa fa-refresh"></i>
         </span>
         <span>Refresh</span>
       </button>
