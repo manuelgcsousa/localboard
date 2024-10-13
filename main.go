@@ -13,7 +13,10 @@ type ClipboardData struct {
 	Data string `json:"data"`
 }
 
-const ClipboardFile string = "./data/clipboard.txt"
+const (
+	ServerPort    string = ":27049"
+	ClipboardFile string = "./data/clipboard.txt"
+)
 
 func main() {
 	http.HandleFunc("/", serveIndex)
@@ -23,8 +26,8 @@ func main() {
 
 	handler := Logger(http.DefaultServeMux)
 
-	fmt.Println("Server listening on port :8080...")
-	log.Fatal(http.ListenAndServe(":8080", handler))
+	fmt.Printf("Server listening on port %s...\n", ServerPort)
+	log.Fatal(http.ListenAndServe(ServerPort, handler))
 }
 
 func serveIndex(w http.ResponseWriter, r *http.Request) {
