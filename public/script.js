@@ -23,8 +23,20 @@ function updateIcon() {
   }
 }
 
+// Fetch the saved clipboard from the server
+// and set it has the textarea value.
+async function setClipboardText() {
+  const response = await fetch("/read");
+  const text = await response.text();
+
+  document.getElementById("textarea").value = text;
+
+  FILESTATE.saved = true;
+  updateIcon();
+}
+
 // Send the text within the textarea to the server to be saved.
-function saveText() {
+function saveClipboardText() {
   const text = document.getElementById("textarea").value;
 
   fetch("/save", {
@@ -41,19 +53,13 @@ function saveText() {
 /* Event listeners */
 
 // On page load, fetch the updated clipboard.
-window.addEventListener("load", () => {
-  fetch("/read")
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById("textarea").value = data;
-    });
-})
+window.addEventListener("load", () => setClipboardText());
 
 // On any keypress, check for (ctrl | meta) + s.
 window.addEventListener("keydown", (event) => {
   if ((event.ctrlKey || event.metaKey) && event.key === 's') {
     event.preventDefault();
-    saveText();
+    saveClipboardText();
   }
 });
 

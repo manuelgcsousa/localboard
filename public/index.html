@@ -23,11 +23,18 @@
         </div>
       </div>
 
-      <button class="button" onclick="saveText()">
+      <button class="button" onclick="saveClipboardText()">
         <span class="icon" id="status-icon">
           <i id="icon" class="fas fa-check-circle has-text-success"></i>
         </span>
         <span id="button-text">Synched</span>
+      </button>
+
+      <button class="button ml-2" onclick="setClipboardText()">
+        <span class="icon">
+          <i id="icon" class="fa fa-refresh"></i>
+        </span>
+        <span>Refresh</span>
       </button>
     </div>
   </section>
