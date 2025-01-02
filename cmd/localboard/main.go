@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 type ClipboardData struct {
@@ -28,13 +29,16 @@ func main() {
 	http.HandleFunc("/save", handleSave)
 
 	// Wrap default serve mux with logger middleware
-	handler := Logger(http.DefaultServeMux)
+	handler := logger(http.DefaultServeMux)
 
 	// Start server
 	fmt.Printf("Server listening on port %s...\n", ServerPort)
 	log.Fatal(http.ListenAndServe(ServerPort, handler))
 }
 
+// handleRead serves the content of the clipboard file.
+// If the file does not exist, it creates an empty clipboard file.
+// Responds with the file content in plain text format.
 func handleRead(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Not found", http.StatusNotFound)
@@ -62,6 +66,9 @@ func handleRead(w http.ResponseWriter, r *http.Request) {
 	w.Write(content)
 }
 
+// handleSave saves data to the clipboard file.
+// Expects a JSON body with the "data" field. Returns a success message
+// or an error if the file cannot be written.
 func handleSave(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Not found", http.StatusNotFound)
@@ -83,4 +90,23 @@ func handleSave(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Clipboard saved"))
+}
+
+// logger is middleware that logs HTTP requests.
+// Logs the current timestamp, HTTP method, request path and client IP address.
+func logger(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// clear default log flags
+		log.SetFlags(0)
+
+		log.Printf(
+			"[%s] %s %s %s",
+			time.Now().Format("2006/01/02 15:04:05"),
+			r.Method,
+			r.URL.Path,
+			r.RemoteAddr,
+		)
+
+		next.ServeHTTP(w, r)
+	})
 }

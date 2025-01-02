@@ -1,10 +1,9 @@
 BINARY_NAME=localboard
-SOURCE_FILES=*.go
 
 all: build
 
 build:
-	go build -o bin/$(BINARY_NAME) $(SOURCE_FILES)
+	go build -o bin/$(BINARY_NAME) cmd/$(BINARY_NAME)/main.go
 
 run: build
 	./bin/$(BINARY_NAME)
