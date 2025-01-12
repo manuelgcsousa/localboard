@@ -1,59 +1,31 @@
 /* State variables */
-
 const FILESTATE = {
   saved: false
 };
 
 
-/* Global functions */
+/* WebSocket setup */
+const host = window.location.hostname;
+const port = "27049";
+const socket = new WebSocket(`ws://${host}:${port}/ws`);
 
-// Update the "synched/unsynched" icon next to the button.
-function updateIcon() {
-  const buttonText = document.getElementById("button-text");
-  const icon = document.getElementById("icon");
+socket.addEventListener("open", () => {
+  console.log("Connected to WebSocket server...");
+});
 
-  if (FILESTATE.saved) {
-      // change to checkmark if file is saved
-      icon.className = "fas fa-check-circle has-text-success";
-      buttonText.innerText = "Synched";
-  } else {
-      // change to exclamation if file is unsaved
-      icon.className = "fas fa-exclamation-triangle has-text-warning";
-      buttonText.innerText = "Unsynched";
-  }
-}
-
-// Fetch the saved clipboard from the server
-// and set it has the textarea value.
-async function setClipboardText() {
-  const response = await fetch("/read");
-  const text = await response.text();
-
-  document.getElementById("textarea").value = text;
+socket.addEventListener("message", (event) => {
+  document.getElementById("textarea").value = event.data;
 
   FILESTATE.saved = true;
   updateIcon();
-}
+});
 
-// Send the text within the textarea to the server to be saved.
-function saveClipboardText() {
-  const text = document.getElementById("textarea").value;
-
-  fetch("/save", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ data: text }),
-  });
-
-  FILESTATE.saved = true;
-  updateIcon();
-}
+socket.addEventListener("error", (error) => {
+  console.error("WebSocket error:", error);
+});
 
 
 /* Event listeners */
-
-// On page load, fetch the updated clipboard.
-window.addEventListener("load", () => setClipboardText());
 
 // On any keypress, check for (ctrl | meta) + s.
 window.addEventListener("keydown", (event) => {
@@ -98,3 +70,31 @@ document.getElementById("textarea").addEventListener("keydown", (event) => {
     this.selectionStart = this.selectionEnd = start + spaces.length;
   }
 });
+
+
+/* Utility functions */
+
+// Update the "synched/unsynched" icon next to the button.
+function updateIcon() {
+  const buttonText = document.getElementById("button-text");
+  const icon = document.getElementById("icon");
+
+  if (FILESTATE.saved) {
+      // change to checkmark if file is saved
+      icon.className = "fas fa-check-circle has-text-success";
+      buttonText.innerText = "Synched";
+  } else {
+      // change to exclamation if file is unsaved
+      icon.className = "fas fa-exclamation-triangle has-text-warning";
+      buttonText.innerText = "Unsynched";
+  }
+}
+
+// Send the text to the server via the WebSocket.
+function saveClipboardText() {
+  const text = document.getElementById("textarea").value;
+  socket.send(text);
+
+  FILESTATE.saved = true;
+  updateIcon();
+}

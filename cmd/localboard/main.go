@@ -1,22 +1,25 @@
 package main
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"sync"
 	"time"
-)
 
-type ClipboardData struct {
-	Data string `json:"data"`
-}
+	"golang.org/x/net/websocket"
+)
 
 const (
 	ServerPort    string = ":27049"
 	ClipboardFile string = "./data/clipboard.txt"
+)
+
+var (
+	mu        sync.Mutex
+	clients   = make(map[*websocket.Conn]bool)
+	broadcast = make(chan string)
 )
 
 func main() {
@@ -24,9 +27,10 @@ func main() {
 	fs := http.FileServer(http.Dir("./public/"))
 	http.Handle("/", fs)
 
-	// Non-static routes
-	http.HandleFunc("/read", handleRead)
-	http.HandleFunc("/save", handleSave)
+	http.Handle("/ws", websocket.Handler(handleWebSocket))
+
+	// Start goroutine to handle message broadcasting to all connected clients
+	go handleBroadcast()
 
 	// Wrap default serve mux with logger middleware
 	handler := logger(http.DefaultServeMux)
@@ -36,60 +40,65 @@ func main() {
 	log.Fatal(http.ListenAndServe(ServerPort, handler))
 }
 
-// handleRead serves the content of the clipboard file.
-// If the file does not exist, it creates an empty clipboard file.
-// Responds with the file content in plain text format.
-func handleRead(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Not found", http.StatusNotFound)
-		return
-	}
+func handleWebSocket(ws *websocket.Conn) {
+	defer ws.Close()
 
-	// check if clipboard file exists
-	// if not, create an empty file
-	if _, err := os.Stat(ClipboardFile); errors.Is(err, os.ErrNotExist) {
-		err := os.WriteFile(ClipboardFile, []byte{}, 0644)
-		if err != nil {
-			http.Error(w, "Error while creating file", http.StatusInternalServerError)
+	mu.Lock()
+	clients[ws] = true
+	mu.Unlock()
+
+	if content, err := os.ReadFile(ClipboardFile); err == nil {
+		if _, err = ws.Write(content); err != nil {
+			log.Println("Error sending initial clipboard data: ", err)
 			return
 		}
 	}
 
-	// read clipboard text file
-	content, err := os.ReadFile(ClipboardFile)
-	if err != nil {
-		http.Error(w, "Error while reading file", http.StatusInternalServerError)
-		return
-	}
+	for {
+		var message string
+		err := websocket.Message.Receive(ws, &message)
+		if err != nil {
+			removeClient(ws)
+			break
+		}
 
-	w.Header().Set("Content-Type", "text/plain")
-	w.Write(content)
+		// Save new clipboard data
+		if err := saveClipboardData(message); err != nil {
+			log.Println("Error saving clipboard data: ", err)
+			continue
+		}
+
+		// Broadcast message to other clients
+		broadcast <- message
+	}
 }
 
-// handleSave saves data to the clipboard file.
-// Expects a JSON body with the "data" field. Returns a success message
-// or an error if the file cannot be written.
-func handleSave(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Not found", http.StatusNotFound)
-		return
-	}
+// handleBroadcast receives messages from the 'broadcast' channel
+// and sends it to all connected clients.
+func handleBroadcast() {
+	for {
+		message := <-broadcast
 
-	var clipboardData ClipboardData
-	err := json.NewDecoder(r.Body).Decode(&clipboardData)
-	if err != nil {
-		http.Error(w, "Error decoding request body", http.StatusBadRequest)
-		return
+		mu.Lock()
+		for client := range clients {
+			websocket.Message.Send(client, message)
+		}
+		mu.Unlock()
 	}
+}
 
-	err = os.WriteFile(ClipboardFile, []byte(clipboardData.Data), 0644)
-	if err != nil {
-		http.Error(w, "Error while writing to file", http.StatusInternalServerError)
-		return
-	}
+// saveClipboardContent writes the clipboard content to the file.
+func saveClipboardData(content string) error {
+	return os.WriteFile(ClipboardFile, []byte(content), 0644)
+}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Clipboard saved"))
+// removeClient removes a clients from the clients map and closes the connection.
+func removeClient(ws *websocket.Conn) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	delete(clients, ws)
+	ws.Close()
 }
 
 // logger is middleware that logs HTTP requests.

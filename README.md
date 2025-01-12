@@ -8,8 +8,15 @@ I needed a very simple way to share text between several devices. All I needed w
 
 ## Usage
 
-- The main idea is to host this on some device on your local network (this simple [docker-compose](./docker-compose.yml) might help).
-- The textbox data is simply saved on a text file on the server.
+- Host this on a device on your local network (you can use this simple [docker-compose](./docker-compose.yml)).
+- The textbox data is saved to a text file on the server.
+
+### WebSockets
+
+Localboard uses WebSockets to keep the text synced across all connected devices in real-time. When one device updates the textbox, the change is instantly broadcast to all other devices with an open connection.
+
+- The server handles incoming WebSocket connections and pushes updates to all connected clients.
+- Clients automatically receive the updated text and reflect it in the textbox.
 
 Build:
 ```bash
