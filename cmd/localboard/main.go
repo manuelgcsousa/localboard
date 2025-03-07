@@ -92,7 +92,7 @@ func saveClipboardData(content string) error {
 	return os.WriteFile(ClipboardFile, []byte(content), 0644)
 }
 
-// removeClient removes a clients from the clients map and closes the connection.
+// removeClient removes a client from the clients map and closes the connection.
 func removeClient(ws *websocket.Conn) {
 	mu.Lock()
 	defer mu.Unlock()
@@ -101,7 +101,7 @@ func removeClient(ws *websocket.Conn) {
 	ws.Close()
 }
 
-// logger is middleware that logs HTTP requests.
+// logger is a simple middleware that logs HTTP requests.
 // Logs the current timestamp, HTTP method, request path and client IP address.
 func logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
