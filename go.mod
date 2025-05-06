@@ -1,5 +1,7 @@
 module github.com/manuelgcsousa/localboard
 
-go 1.22.2
+go 1.23.0
 
-require golang.org/x/net v0.34.0
+toolchain go1.23.3
+
+require golang.org/x/net v0.38.0
