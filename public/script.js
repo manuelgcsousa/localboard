@@ -47,7 +47,7 @@ if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
 // On any keypress within the 'textarea':
 // 1) From a list of keys, update the "sync" icon button.
 // 2) If it's a tab, introduce that tab char into the textarea.
-document.getElementById("textarea").addEventListener("keydown", (event) => {
+document.getElementById("textarea").addEventListener("keydown", function (event) {
   const nonEditingKeys = [
     "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
     "Shift", "Control", "Alt", "Meta", "CapsLock", "Escape"
@@ -60,13 +60,13 @@ document.getElementById("textarea").addEventListener("keydown", (event) => {
   if (event.key === "Tab") {
     event.preventDefault();
 
-    // insert 2 spaces instead of tab
-    const spaces = "  ";
-    this.value = (
-      this.value.substring(0, this.selectionStart) + spaces + this.value.substring(this.selectionEnd)
-    );
+    // insert 4 spaces instead of tab
+    const spaces = "    ";
+    const start = this.selectionStart;
+    const end = this.selectionEnd;
 
     // move caret to the right position after spaces are inserted
+    this.value = this.value.substring(0, start) + spaces + this.value.substring(end);
     this.selectionStart = this.selectionEnd = start + spaces.length;
   }
 });
